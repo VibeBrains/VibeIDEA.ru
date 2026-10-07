@@ -1,0 +1,159 @@
+---
+import Lines from './Lines.astro'
+import type { Lang } from '../config/languages'
+import { acpAgents } from '../config/site'
+import { useTranslations, type Key } from '../i18n'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const { t } = useTranslations(lang)
+
+const modes: readonly { name: Key; text: Key }[] = [
+  { name: 'agent.mode.autopilot', text: 'agent.mode.autopilot.text' },
+  { name: 'agent.mode.edits', text: 'agent.mode.edits.text' },
+  { name: 'agent.mode.manual', text: 'agent.mode.manual.text' },
+  { name: 'agent.mode.plan', text: 'agent.mode.plan.text' },
+]
+---
+
+<section class="section agent">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow" data-reveal>{t('agent.eyebrow')}</p>
+      <h2 class="section-title" data-reveal style="--reveal-i: 1">{t('agent.title')}</h2>
+      <p class="section-lead" data-reveal style="--reveal-i: 2"><Lines text={t('agent.lead')} /></p>
+      <ul class="agents" data-reveal style="--reveal-i: 3">
+        {acpAgents.map((name) => <li>{name}</li>)}
+      </ul>
+    </div>
+
+    <div class="modes-box" data-reveal>
+      <h3 class="modes-title">{t('agent.modes.title')}</h3>
+      <ol class="modes">
+        {
+          modes.map((mode, i) => (
+            <li class="mode" style={`--i: ${i}`}>
+              <span class="mode-name">{t(mode.name)}</span>
+              <span class="mode-text">{t(mode.text)}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="irreversible">{t('agent.irreversible')}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .section-lead {
+    display: grid;
+    gap: 4px;
+  }
+
+  .agents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .agents li {
+    padding: 6px 12px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--fg);
+    font-family: var(--font-title);
+    font-size: 13px;
+  }
+
+  .agents li::before {
+    content: '$ ';
+    color: var(--cyan);
+  }
+
+  .modes-box {
+    display: grid;
+    gap: 16px;
+    padding: 24px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .modes-title {
+    font-size: 16px;
+    color: var(--fg-muted);
+  }
+
+  .modes {
+    display: grid;
+    gap: 10px;
+  }
+
+  @media (min-width: 860px) {
+    .modes {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .mode {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    padding: 16px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    transition: border-color 0.3s;
+  }
+
+  .mode-name {
+    color: var(--fg);
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .mode-text {
+    color: var(--fg-muted);
+    font-size: 14px;
+  }
+
+  .irreversible {
+    color: var(--fg-soft);
+    font-size: 15px;
+  }
+
+  .irreversible::before {
+    content: '⚠ ';
+    color: var(--warn);
+  }
+
+  /* The active mode walks the four: the pill of the composer switching */
+  @media (prefers-reduced-motion: no-preference) {
+    .modes-box.is-visible .mode {
+      animation: mode-on 8s ease-in-out infinite;
+      animation-delay: calc(var(--i) * 2s);
+    }
+  }
+
+  @keyframes mode-on {
+    0%,
+    100% {
+      border-color: var(--surface-3);
+      box-shadow: none;
+    }
+    5%,
+    22% {
+      border-color: rgb(0 229 255 / 0.6);
+      box-shadow: 0 0 24px -8px var(--brand-glow);
+    }
+    27% {
+      border-color: var(--surface-3);
+      box-shadow: none;
+    }
+  }
+</style>

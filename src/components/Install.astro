@@ -1,0 +1,250 @@
+---
+import Lines from './Lines.astro'
+import { langTags, type Lang } from '../config/languages'
+import { links } from '../config/site'
+import { buildReleases } from '../config/build'
+import { kindOf, toMb, type AssetKind } from '../config/releases'
+import { useTranslations, type Key } from '../i18n'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const { t } = useTranslations(lang)
+
+const RELEASES_SHOWN = 3
+
+const needs: readonly { what: Key; why: Key }[] = [
+  { what: 'install.php', why: 'install.php.for' },
+  { what: 'install.node', why: 'install.node.for' },
+  { what: 'install.media', why: 'install.media.for' },
+]
+
+const kindKeys: Record<AssetKind, Key> = {
+  dmg: 'releases.dmg',
+  exe: 'releases.exe',
+  winZip: 'releases.winZip',
+  tarGz: 'releases.tarGz',
+}
+
+const dateOf = (iso: string) =>
+  new Intl.DateTimeFormat(langTags[lang], { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso))
+
+const shown = buildReleases.slice(0, RELEASES_SHOWN).map((release) => ({
+  title: t('releases.item', { version: release.tag_name, date: dateOf(release.published_at) }),
+  assets: release.assets.flatMap((asset) => {
+    const kind = kindOf(asset.name)
+    return kind === undefined
+      ? []
+      : [{ href: asset.browser_download_url, label: t(kindKeys[kind]), size: t('releases.size', { size: toMb(asset.size) }) }]
+  }),
+}))
+---
+
+<section class="section install" id="install">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow" data-reveal>{t('install.eyebrow')}</p>
+      <h2 class="section-title" data-reveal style="--reveal-i: 1">{t('install.title')}</h2>
+      <p class="section-lead" data-reveal style="--reveal-i: 2"><Lines text={t('install.lead')} /></p>
+    </div>
+
+    <dl class="needs" data-reveal>
+      {
+        needs.map((need) => (
+          <div class="need">
+            <dt>{t(need.what)}</dt>
+            <dd>{t(need.why)}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <div class="panels">
+      <div
+        class="panel"
+        data-reveal
+        data-releases
+        data-item-template={t('releases.item')}
+        data-size-template={t('releases.size')}
+        data-kind-dmg={t('releases.dmg')}
+        data-kind-exe={t('releases.exe')}
+        data-kind-win-zip={t('releases.winZip')}
+        data-kind-tar-gz={t('releases.tarGz')}
+      >
+        <h3>{t('releases.title')}</h3>
+        <ul class="release-list" data-releases-list>
+          {
+            shown.map((release) => (
+              <li>
+                <span class="release-title">{release.title}</span>
+                <span class="release-assets">
+                  {release.assets.map((asset) => (
+                    <a href={asset.href} rel="noopener">
+                      <span>{asset.label}</span>
+                      <span class="size">{asset.size}</span>
+                    </a>
+                  ))}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+        <a class="all" href={links.releases} rel="noopener">{t('releases.all')}</a>
+      </div>
+
+      <div class="panel" data-reveal style="--reveal-i: 1">
+        <h3>{t('firstRun.title')}</h3>
+        <p class="first-run-lead"><Lines text={t('firstRun.lead')} /></p>
+        <ul class="os">
+          <li>{t('firstRun.macos')}</li>
+          <li>{t('firstRun.windows')}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .section-lead {
+    display: grid;
+    gap: 4px;
+  }
+
+  .needs {
+    display: grid;
+    gap: 1px;
+    margin: 0 0 24px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    background: var(--surface-3);
+    overflow: hidden;
+  }
+
+  @media (min-width: 860px) {
+    .needs {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .need {
+    display: grid;
+    gap: 4px;
+    padding: 18px 20px;
+    background: var(--surface);
+  }
+
+  .need dt {
+    color: var(--fg);
+    font-family: var(--font-title);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .need dt::before {
+    content: '$ ';
+    color: var(--cyan);
+  }
+
+  .need dd {
+    margin: 0;
+    color: var(--fg-muted);
+    font-size: 14px;
+  }
+
+  .panels {
+    display: grid;
+    gap: 16px;
+  }
+
+  @media (min-width: 1000px) {
+    .panels {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .panel {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    padding: 24px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    min-width: 0;
+  }
+
+  .panel h3 {
+    font-size: 18px;
+  }
+
+  /* The list is refreshed from GitHub by a script: its nodes carry no scope attribute, so these rules are global */
+  .release-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .release-list :global(li) {
+    display: grid;
+    gap: 8px;
+  }
+
+  .release-list :global(.release-title) {
+    color: var(--fg);
+    font-family: var(--font-title);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .release-list :global(.release-assets) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .release-list :global(.release-assets a) {
+    display: inline-flex;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius);
+    color: var(--fg-soft);
+    font-size: 13px;
+  }
+
+  .release-list :global(.release-assets a:hover) {
+    border-color: rgb(0 229 255 / 0.5);
+    color: var(--fg);
+  }
+
+  .release-list :global(.size) {
+    color: var(--fg-faint);
+    font-family: var(--font-title);
+  }
+
+  .all {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .first-run-lead {
+    display: grid;
+    gap: 4px;
+    color: var(--fg-muted);
+    font-size: 15px;
+  }
+
+  .os {
+    display: grid;
+    gap: 10px;
+    color: var(--fg-soft);
+    font-size: 14px;
+  }
+
+  .os li::before {
+    content: '> ';
+    color: var(--cyan);
+    font-family: var(--font-title);
+  }
+</style>

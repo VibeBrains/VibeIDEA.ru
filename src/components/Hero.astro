@@ -1,0 +1,681 @@
+---
+import Lines from './Lines.astro'
+import DownloadButtons from './DownloadButtons.astro'
+import { langTags, type Lang } from '../config/languages'
+import { buildReleases } from '../config/build'
+import { useTranslations, type Key } from '../i18n'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const { t } = useTranslations(lang)
+
+// The letter a word turns inside out: the first of these it holds, widest counters first — a narrow letter in a plate
+// reads as a bar. A one-letter word keeps its letter: a whole word in a plate is a square, not a word
+const PLATE_LETTERS = 'АОДРВБСМAODRBCM'
+const plated = (word: string) => {
+  if (word.length < 2) {
+    return { before: word, letter: '', after: '' }
+  }
+  const upper = word.toLocaleUpperCase(lang)
+  const at = [...PLATE_LETTERS].map((letter) => upper.indexOf(letter)).find((index) => index >= 0) ?? -1
+  return at < 0
+    ? { before: word, letter: '', after: '' }
+    : { before: word.slice(0, at), letter: word[at], after: word.slice(at + 1) }
+}
+const accentWords = t('hero.titleAccent').split(' ').map(plated)
+
+const latest = buildReleases[0]
+const dateOf = (iso: string) =>
+  new Intl.DateTimeFormat(langTags[lang], { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso))
+
+// The project tree and the editor are drawn as bars: widths in percent, indent levels, and which lines the agent adds
+const tree: readonly { w: number; indent: number }[] = [
+  { w: 70, indent: 0 },
+  { w: 60, indent: 1 },
+  { w: 74, indent: 2 },
+  { w: 52, indent: 2 },
+  { w: 64, indent: 1 },
+  { w: 48, indent: 2 },
+  { w: 58, indent: 0 },
+]
+const code: readonly { w: number; indent: number; added?: boolean }[] = [
+  { w: 52, indent: 0 },
+  { w: 40, indent: 1 },
+  { w: 66, indent: 2 },
+  { w: 58, indent: 2, added: true },
+  { w: 44, indent: 3, added: true },
+  { w: 36, indent: 2, added: true },
+  { w: 62, indent: 2 },
+  { w: 30, indent: 1 },
+  { w: 18, indent: 0 },
+]
+const steps: readonly Key[] = ['hero.ide.step1', 'hero.ide.step2', 'hero.ide.step3']
+---
+
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="container hero-row">
+    <div class="hero-copy">
+      <p class="eyebrow" data-reveal>{t('hero.eyebrow')}</p>
+      <h1 class="hero-title" data-reveal style="--reveal-i: 1">
+        <span class="ln">{t('hero.title')}<span class="cursor" aria-hidden="true"></span></span>
+        <span class="ln hero-accent fused" data-fused aria-label={t('hero.titleAccent')}>
+          {
+            accentWords.map((word, index) => (
+              <>
+                {index > 0 && ' '}
+                <span class="word" aria-hidden="true">
+                  {word.before}
+                  {word.letter && <span class="plate">{word.letter}</span>}
+                  {word.after}
+                </span>
+              </>
+            ))
+          }
+        </span>
+      </h1>
+      <p class="hero-lead" data-reveal style="--reveal-i: 2">
+        <Lines text={t('hero.lead')} />
+      </p>
+      <div class="hero-cta" id="download" data-reveal style="--reveal-i: 3">
+        <DownloadButtons lang={lang} />
+      </div>
+      <p class="hero-note" data-reveal style="--reveal-i: 4">
+        {t('hero.note').split('\n').map((line) => <span>{line}</span>)}
+      </p>
+      {
+        latest && (
+          <p class="hero-version" data-reveal style="--reveal-i: 5" data-version data-template={t('hero.version')}>
+            {t('hero.version', { version: latest.tag_name, date: dateOf(latest.published_at) })}
+          </p>
+        )
+      }
+    </div>
+
+    <div class="hero-visual" data-reveal style="--reveal-i: 2">
+      <div class="stage" data-tilt-stage data-play>
+        <div class="scene" data-tilt role="img" aria-label={t('hero.ide.aria')}>
+          <div class="layer layer--window" aria-hidden="true">
+            <div class="window">
+              <div class="window-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <span class="project">{t('hero.ide.project')}</span>
+                <span class="tab">{t('hero.ide.file')}</span>
+              </div>
+              <div class="window-body">
+                <ul class="tree">
+                  {tree.map((row) => <li style={`--w: ${row.w}%; --indent: ${row.indent}`} />)}
+                </ul>
+                <ol class="code">
+                  {
+                    code.map((line, i) => (
+                      <li class:list={{ added: line.added }} style={`--w: ${line.w}%; --indent: ${line.indent}; --i: ${i}`}>
+                        <span class="num">{i + 1}</span>
+                        <span class="bar" />
+                      </li>
+                    ))
+                  }
+                </ol>
+              </div>
+              <div class="agent">
+                <span class="agent-title">{t('hero.ide.agent')}</span>
+                <span class="agent-ask">{t('hero.ide.ask')}</span>
+                <ul class="agent-steps">
+                  {
+                    steps.map((step, i) => (
+                      <li style={`--i: ${i}`}>
+                        <span class="tick" />
+                        {t(step)}
+                      </li>
+                    ))
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer layer--fuse" aria-hidden="true">
+            <span class="chip chip--fuse"><span class="pulse"></span>{t('hero.ide.fuse')}</span>
+          </div>
+          <div class="layer layer--design" aria-hidden="true">
+            <span class="chip chip--design"><span class="warn">!</span>{t('hero.ide.design')}</span>
+          </div>
+          <div class="layer layer--mode" aria-hidden="true">
+            <span class="chip chip--mode">{t('hero.ide.mode')}</span>
+          </div>
+          <div class="layer layer--spark" aria-hidden="true">
+            <span class="star3d">
+              <span class="spark"></span>
+              <span class="spark"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-block: 80px 104px;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    inset: -30% -10% auto 35%;
+    height: 820px;
+    background:
+      radial-gradient(closest-side at 35% 45%, rgb(0 229 255 / 0.2), transparent 70%),
+      radial-gradient(closest-side at 70% 55%, rgb(157 92 255 / 0.24), transparent 70%),
+      radial-gradient(closest-side at 80% 20%, rgb(255 46 151 / 0.14), transparent 70%);
+    filter: blur(24px);
+    pointer-events: none;
+  }
+
+  /* Dot grid instead of the siblings' line grid: the editor's empty canvas */
+  .hero-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 70% 60% at 60% 30%, #000 20%, transparent 75%);
+    pointer-events: none;
+  }
+
+  .hero-row {
+    position: relative;
+    display: grid;
+    gap: 56px;
+    align-items: center;
+  }
+
+  @media (min-width: 1040px) {
+    .hero-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: 48px;
+    }
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: 24px;
+    justify-items: start;
+    min-width: 0;
+  }
+
+  .hero-title {
+    font-size: clamp(32px, 4.4vw, 50px);
+    line-height: 1.08;
+  }
+
+  .hero-accent {
+    background: linear-gradient(92deg, var(--cyan), #c9b3ff 55%, var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /*
+   * The fused line: heavy condensed capitals set so tight they touch, and in each word one letter turned inside out
+   * Here the plate takes the colour of the icon's spark
+   */
+  .fused {
+    display: block;
+    margin-top: 0.12em;
+    font-family: var(--font-fused);
+    font-weight: 400;
+    font-size: 1.3em;
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+  }
+
+  .fused .word {
+    white-space: nowrap;
+  }
+
+  .fused .plate {
+    display: inline-block;
+    margin: 0 0.01em;
+    padding: 0.06em 0.03em 0;
+    line-height: 0.86;
+    background: var(--spark);
+    color: var(--bg);
+    -webkit-text-fill-color: var(--bg);
+  }
+
+  .hero-lead {
+    max-width: 600px;
+    color: var(--fg-muted);
+    font-size: 18px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .hero-cta {
+    max-width: 100%;
+  }
+
+  .hero-note {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    color: var(--fg-faint);
+    font-family: var(--font-accent);
+    font-size: 13px;
+  }
+
+  .hero-note span::before {
+    content: '✓';
+    margin-right: 8px;
+    color: var(--cyan);
+  }
+
+  .hero-version {
+    color: var(--fg-faint);
+    font-family: var(--font-accent);
+    font-size: 13px;
+  }
+
+  /* ---------- the 3D window ---------- */
+
+  .hero-visual {
+    min-width: 0;
+  }
+
+  .stage {
+    perspective: 1300px;
+    perspective-origin: 50% 40%;
+    padding: 48px 12px 60px;
+  }
+
+  .scene {
+    --rx: 10deg;
+    --ry: -16deg;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.6s var(--ease-out);
+  }
+
+  .layer {
+    transform-style: preserve-3d;
+  }
+
+  .window {
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow:
+      0 40px 90px -30px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(0 229 255 / 0.06),
+      -30px 0 90px -40px var(--brand-glow),
+      40px 0 90px -40px var(--violet-glow);
+    overflow: hidden;
+  }
+
+  .window-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--surface-3);
+    background: var(--bg-soft);
+    font-family: var(--font-title);
+    font-size: 11px;
+  }
+
+  .dots {
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  .dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--surface-3);
+  }
+
+  .project {
+    color: var(--fg);
+    font-weight: 700;
+  }
+
+  .tab {
+    padding: 3px 8px;
+    border-bottom: 2px solid var(--cyan);
+    color: var(--fg-soft);
+  }
+
+  .window-body {
+    display: grid;
+    grid-template-columns: 26% minmax(0, 1fr);
+    min-height: 210px;
+  }
+
+  .tree {
+    display: grid;
+    align-content: start;
+    gap: 9px;
+    padding: 14px 10px;
+    border-right: 1px solid var(--surface-3);
+  }
+
+  .tree li {
+    width: var(--w);
+    height: 6px;
+    margin-left: calc(var(--indent) * 9px);
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  .tree li:nth-child(4) {
+    background: rgb(0 229 255 / 0.5);
+  }
+
+  .code {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 14px 12px;
+  }
+
+  .code li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 12px;
+  }
+
+  .code li.added::before {
+    content: '';
+    position: absolute;
+    inset: -2px -12px -2px -12px;
+    background: rgb(74 222 128 / 0.08);
+    border-left: 2px solid var(--success);
+  }
+
+  .num {
+    position: relative;
+    width: 12px;
+    color: var(--fg-faint);
+    font-family: var(--font-title);
+    font-size: 9px;
+    text-align: right;
+  }
+
+  .bar {
+    position: relative;
+    width: var(--w);
+    height: 6px;
+    margin-left: calc(var(--indent) * 14px);
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgb(0 229 255 / 0.6), rgb(157 92 255 / 0.35));
+  }
+
+  .code li:nth-child(3n) .bar {
+    background: rgb(255 255 255 / 0.22);
+  }
+
+  .code li.added .bar {
+    background: linear-gradient(90deg, rgb(74 222 128 / 0.7), rgb(74 222 128 / 0.25));
+  }
+
+  .agent {
+    display: grid;
+    gap: 8px;
+    padding: 12px 14px 14px;
+    border-top: 1px solid var(--surface-3);
+    background: var(--bg-soft);
+    font-size: 12px;
+  }
+
+  .agent-title {
+    color: var(--fg-faint);
+    font-family: var(--font-title);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .agent-ask {
+    color: var(--fg);
+  }
+
+  .agent-ask::before {
+    content: '> ';
+    color: var(--cyan);
+    font-family: var(--font-title);
+  }
+
+  .agent-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    color: var(--fg-soft);
+  }
+
+  .agent-steps li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tick {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+  }
+
+  .layer--fuse,
+  .layer--design,
+  .layer--mode,
+  .layer--spark {
+    position: absolute;
+  }
+
+  .layer--fuse {
+    top: -20px;
+    left: 8%;
+    transform: translateZ(110px);
+  }
+
+  .layer--design {
+    right: -22px;
+    top: 38%;
+    transform: translateZ(150px);
+  }
+
+  .layer--mode {
+    bottom: -18px;
+    left: -10px;
+    transform: translateZ(90px);
+  }
+
+  .layer--spark {
+    top: -56px;
+    right: 6%;
+    transform: translateZ(200px);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius);
+    background: rgb(22 23 27 / 0.94);
+    color: var(--fg);
+    font-family: var(--font-title);
+    font-size: 11px;
+    white-space: nowrap;
+    box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.95);
+  }
+
+  .chip--fuse {
+    border-color: rgb(74 222 128 / 0.4);
+  }
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  .chip--design {
+    border-color: rgb(251 191 36 / 0.45);
+  }
+
+  .warn {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    background: var(--warn);
+    color: var(--bg);
+    font-weight: 800;
+  }
+
+  .chip--mode {
+    border-color: rgb(157 92 255 / 0.5);
+    color: #c9b3ff;
+  }
+
+  /* The icon's spark, built of two crossed planes, so it reads as a solid star while it turns */
+  .star3d {
+    position: relative;
+    display: block;
+    width: 72px;
+    height: 72px;
+    transform-style: preserve-3d;
+  }
+
+  .star3d .spark {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(160deg, #ff7cc0, var(--spark) 55%, var(--violet));
+  }
+
+  .star3d .spark:nth-child(2) {
+    transform: rotateY(90deg);
+  }
+
+  @media (max-width: 640px) {
+    .window-body {
+      grid-template-columns: 1fr;
+    }
+
+    .tree {
+      display: none;
+    }
+
+    .layer--design {
+      right: 4px;
+      top: auto;
+      bottom: 36%;
+    }
+
+    .layer--mode {
+      left: 8px;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .chip {
+      animation: float 7s ease-in-out infinite;
+    }
+
+    .layer--design .chip {
+      animation-delay: -2.5s;
+    }
+
+    .layer--mode .chip {
+      animation-delay: -5s;
+    }
+
+    .stage.is-playing .star3d {
+      animation: star-spin 7s linear infinite;
+    }
+
+    .stage.is-playing .pulse {
+      animation: pulse 1.8s ease-out infinite;
+    }
+
+    /* The agent's edit loops while the window is on screen: the added lines are typed, the steps tick in turn */
+    .stage.is-playing .code li.added .bar {
+      animation: type 8s var(--ease-out) infinite backwards;
+      animation-delay: calc((var(--i) - 3) * 0.35s + 0.6s);
+    }
+
+    .stage.is-playing .agent-steps li {
+      animation: step 8s ease-out infinite backwards;
+      animation-delay: calc(0.3s + var(--i) * 1.2s);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 0 -9px;
+    }
+  }
+
+  @keyframes star-spin {
+    from {
+      transform: rotateY(0deg) rotateZ(0deg);
+    }
+    to {
+      transform: rotateY(360deg) rotateZ(45deg);
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgb(74 222 128 / 0.6);
+    }
+    100% {
+      box-shadow: 0 0 0 8px rgb(74 222 128 / 0);
+    }
+  }
+
+  @keyframes type {
+    0% {
+      clip-path: inset(0 100% 0 0);
+    }
+    16%,
+    90% {
+      clip-path: inset(0 0 0 0);
+    }
+    100% {
+      clip-path: inset(0 100% 0 0);
+    }
+  }
+
+  @keyframes step {
+    0% {
+      opacity: 0;
+    }
+    6%,
+    88% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+</style>

@@ -1,0 +1,179 @@
+---
+import Lines from './Lines.astro'
+import type { Lang } from '../config/languages'
+import { brandIcons } from '../config/site'
+import { langs } from '../config/langs'
+import { useTranslations } from '../i18n'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const { t } = useTranslations(lang)
+
+const STEP = 360 / langs.length
+---
+
+<section class="section langs" id="langs">
+  <div class="container langs-row">
+    <div class="section-head">
+      <p class="eyebrow" data-reveal>{t('langs.eyebrow')}</p>
+      <h2 class="section-title" data-reveal style="--reveal-i: 1"><Lines text={t('langs.title')} /></h2>
+      <p class="section-lead" data-reveal style="--reveal-i: 2"><Lines text={t('langs.lead')} /></p>
+      <p class="debug" data-reveal style="--reveal-i: 3">{t('langs.debug')}</p>
+    </div>
+
+    <div class="prism-wrap" data-reveal style="--reveal-i: 1">
+      <div class="prism-stage" data-play role="img" aria-label={t('langs.prism')}>
+        <img class="prism-core" src={brandIcons.vibeidea} alt="" width="96" height="96" />
+        <ul class="prism" aria-hidden="true">
+          {
+            langs.map((item, i) => (
+              <li class="face" style={`--a: ${i * STEP}deg`}>
+                <span class="face-name">{item.name}</span>
+                <span class="face-server">{item.server}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .langs {
+    overflow: hidden;
+  }
+
+  .langs-row {
+    display: grid;
+    gap: 40px;
+    align-items: center;
+  }
+
+  @media (min-width: 1000px) {
+    .langs-row {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+
+    .langs-row .section-head {
+      margin-bottom: 0;
+    }
+  }
+
+  .langs .section-title {
+    font-size: clamp(26px, 3.2vw, 38px);
+  }
+
+  .section-lead {
+    display: grid;
+    gap: 4px;
+  }
+
+  .debug {
+    color: var(--fg-soft);
+    font-size: 15px;
+  }
+
+  .debug::before {
+    content: '● ';
+    color: var(--danger);
+  }
+
+  .prism-wrap {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+  }
+
+  /* A ring of faces around the vertical axis: twelve cards, each turned by its share of the circle */
+  .prism-stage {
+    --face-w: 150px;
+    --ring: 290px;
+    position: relative;
+    width: 100%;
+    height: 360px;
+    perspective: 1100px;
+    perspective-origin: 50% 30%;
+  }
+
+  @media (max-width: 640px) {
+    .prism-stage {
+      --face-w: 112px;
+      --ring: 216px;
+      height: 280px;
+    }
+  }
+
+  .prism-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    border-radius: 18px;
+    filter: drop-shadow(0 0 30px var(--brand-glow)) drop-shadow(0 0 40px var(--violet-glow));
+  }
+
+  .prism {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(-14deg) rotateY(-20deg);
+  }
+
+  .face {
+    position: absolute;
+    left: calc(var(--face-w) / -2);
+    top: -34px;
+    display: grid;
+    gap: 2px;
+    width: var(--face-w);
+    padding: 12px 14px;
+    border: 1px solid rgb(0 229 255 / 0.35);
+    border-radius: var(--radius);
+    background: linear-gradient(160deg, rgb(22 23 27 / 0.92), rgb(27 28 33 / 0.86));
+    transform: rotateY(var(--a)) translateZ(var(--ring));
+    backface-visibility: visible;
+  }
+
+  .face-name {
+    color: var(--fg);
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .face-server {
+    color: var(--brand-bright);
+    font-family: var(--font-title);
+    font-size: 11px;
+  }
+
+  .face:nth-child(3n + 2) {
+    border-color: rgb(157 92 255 / 0.45);
+  }
+
+  .face:nth-child(3n + 2) .face-server {
+    color: #c9b3ff;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .prism-stage.is-playing .prism {
+      animation: prism-turn 28s linear infinite;
+    }
+  }
+
+  @keyframes prism-turn {
+    from {
+      transform: rotateX(-14deg) rotateY(0deg);
+    }
+    to {
+      transform: rotateX(-14deg) rotateY(-360deg);
+    }
+  }
+</style>

@@ -1,0 +1,315 @@
+---
+import Lines from './Lines.astro'
+import type { Lang } from '../config/languages'
+import { useTranslations, type Key } from '../i18n'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const { t } = useTranslations(lang)
+
+/** Findings of the design scan and where they pin on the mock page, in percent of its box */
+const findings: readonly { key: Key; x: number; y: number }[] = [
+  { key: 'detectors.design.f1', x: 58, y: 30 },
+  { key: 'detectors.design.f2', x: 8, y: 62 },
+  { key: 'detectors.design.f3', x: 40, y: 84 },
+]
+---
+
+<section class="section detectors">
+  <div class="container">
+    <div class="section-head section-head--center">
+      <p class="eyebrow" data-reveal>{t('detectors.eyebrow')}</p>
+      <h2 class="section-title" data-reveal style="--reveal-i: 1"><Lines text={t('detectors.title')} /></h2>
+    </div>
+
+    <div class="pair">
+      <article class="card" data-reveal>
+        <div class="scan" data-play role="img" aria-label={t('detectors.design.aria')}>
+          <div class="page" aria-hidden="true">
+            <span class="pg-nav"></span>
+            <span class="pg-title"></span>
+            <span class="pg-line"></span>
+            <span class="pg-line pg-line--short"></span>
+            <span class="pg-btn"></span>
+            <span class="pg-cards"><i></i><i></i><i></i></span>
+          </div>
+          <span class="beam" aria-hidden="true"></span>
+          {
+            findings.map((finding, i) => (
+              <span class="finding" style={`--x: ${finding.x}%; --y: ${finding.y}%; --i: ${i}`} aria-hidden="true">
+                {t(finding.key)}
+              </span>
+            ))
+          }
+        </div>
+        <h3>{t('detectors.design.title')}</h3>
+        <p class="text"><Lines text={t('detectors.design.text')} /></p>
+      </article>
+
+      <article class="card" data-reveal style="--reveal-i: 1">
+        <div class="slop" data-play role="img" aria-label={t('detectors.slop.aria')}>
+          <p class="slop-text" aria-hidden="true">
+            {t('detectors.slop.before')} <mark style="--i: 0">{t('detectors.slop.p1')}</mark> {t('detectors.slop.mid')}
+            <mark style="--i: 1">{t('detectors.slop.p2')}</mark> {t('detectors.slop.after')}
+            <mark style="--i: 2">{t('detectors.slop.p3')}</mark>
+          </p>
+          <span class="slop-verdict" aria-hidden="true">{t('detectors.slop.verdict')}</span>
+        </div>
+        <h3>{t('detectors.slop.title')}</h3>
+        <p class="text"><Lines text={t('detectors.slop.text')} /></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pair {
+    display: grid;
+    gap: 16px;
+  }
+
+  @media (min-width: 900px) {
+    .pair {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .card {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    min-width: 0;
+  }
+
+  .card h3 {
+    font-size: 20px;
+  }
+
+  .text {
+    display: grid;
+    gap: 4px;
+    color: var(--fg-muted);
+    font-size: 15px;
+  }
+
+  /* ---------- design scan ---------- */
+
+  .scan {
+    position: relative;
+    height: 230px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius);
+    background: #f4f4f5;
+    overflow: hidden;
+  }
+
+  .page {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .page span {
+    display: block;
+    background: #d4d4d8;
+  }
+
+  .pg-nav {
+    height: 8px;
+    width: 100%;
+  }
+
+  .pg-title {
+    height: 16px;
+    width: 64%;
+    background: #3f3f46 !important;
+  }
+
+  .pg-line {
+    height: 7px;
+    width: 86%;
+  }
+
+  .pg-line--short {
+    width: 58%;
+  }
+
+  .pg-btn {
+    height: 18px;
+    width: 64px;
+    background: #a5b4fc !important;
+  }
+
+  .pg-cards {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    height: 40px;
+    background: transparent !important;
+  }
+
+  .pg-cards i {
+    background: #e4e4e7;
+  }
+
+  .beam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: var(--cyan);
+    box-shadow: 0 0 18px 4px rgb(0 229 255 / 0.55);
+    opacity: 0;
+  }
+
+  /* Pinned where the scan found it, but never past the right edge of the mock page */
+  .finding {
+    position: absolute;
+    left: min(var(--x), calc(100% - 172px));
+    top: var(--y);
+    padding: 4px 8px;
+    border-radius: 3px;
+    background: #18181b;
+    color: var(--warn);
+    font-family: var(--font-title);
+    font-size: 11px;
+    white-space: nowrap;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+  }
+
+  .finding::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    border-radius: 50%;
+    background: var(--warn);
+  }
+
+  /* ---------- slop ---------- */
+
+  .slop {
+    display: grid;
+    align-content: center;
+    gap: 14px;
+    height: 230px;
+    padding: 20px;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+  }
+
+  .slop-text {
+    color: var(--fg-soft);
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  mark {
+    padding: 1px 3px;
+    border-radius: 2px;
+    background: rgb(255 46 151 / 0.2);
+    box-shadow: inset 0 -2px 0 var(--spark);
+    color: var(--fg);
+  }
+
+  .slop-verdict {
+    justify-self: start;
+    padding: 5px 10px;
+    border: 1px solid var(--spark);
+    border-radius: var(--radius);
+    color: #ff8cc6;
+    font-family: var(--font-title);
+    font-size: 12px;
+  }
+
+  /*
+   * Loops while on screen: the beam sweeps down and the findings land as it passes them,
+   * the clichés light up one after another and the verdict follows; without motion the final state shows
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .scan.is-playing .beam {
+      animation: sweep 6s ease-in-out infinite;
+    }
+
+    .scan.is-playing .finding {
+      animation: land 6s ease-out infinite backwards;
+      animation-delay: calc(0.8s + var(--i) * 0.9s);
+    }
+
+    .slop.is-playing mark {
+      animation: mark-on 6s ease-out infinite backwards;
+      animation-delay: calc(0.6s + var(--i) * 0.8s);
+    }
+
+    .slop.is-playing .slop-verdict {
+      animation: land 6s ease-out infinite backwards;
+      animation-delay: 3s;
+    }
+  }
+
+  @keyframes sweep {
+    0% {
+      top: 0;
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    55% {
+      top: 100%;
+      opacity: 1;
+    }
+    60%,
+    100% {
+      top: 100%;
+      opacity: 0;
+    }
+  }
+
+  @keyframes land {
+    0% {
+      opacity: 0;
+      transform: translateY(6px) scale(0.95);
+    }
+    6%,
+    80% {
+      opacity: 1;
+      transform: none;
+    }
+    92%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes mark-on {
+    0% {
+      background: transparent;
+      box-shadow: none;
+    }
+    8%,
+    80% {
+      background: rgb(255 46 151 / 0.2);
+      box-shadow: inset 0 -2px 0 var(--spark);
+    }
+    100% {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+</style>

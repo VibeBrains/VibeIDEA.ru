@@ -1,0 +1,259 @@
+---
+import Lines from './Lines.astro'
+import type { Lang } from '../config/languages'
+import { useTranslations, type Key } from '../i18n'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const { t } = useTranslations(lang)
+
+/** Four identical calls in a row trip the loop detector */
+const REPEATS = 4
+
+const fuses: readonly Key[] = [
+  'fuses.list.loop',
+  'fuses.list.silence',
+  'fuses.list.stall',
+  'fuses.list.timeouts',
+  'fuses.list.refusals',
+]
+---
+
+<section class="section fuses" id="fuses">
+  <div class="container fuses-row">
+    <div class="section-head">
+      <p class="eyebrow" data-reveal>{t('fuses.eyebrow')}</p>
+      <h2 class="section-title" data-reveal style="--reveal-i: 1"><Lines text={t('fuses.title')} /></h2>
+      <p class="section-lead" data-reveal style="--reveal-i: 2"><Lines text={t('fuses.lead')} /></p>
+      <ul class="fuse-list" data-reveal style="--reveal-i: 3">
+        {fuses.map((key) => <li>{t(key)}</li>)}
+      </ul>
+    </div>
+
+    <div class="console" data-play data-reveal style="--reveal-i: 2" role="img" aria-label={t('fuses.aria')}>
+      <div class="console-head" aria-hidden="true">
+        <span class="console-title">{t('fuses.run')}</span>
+        <span class="meter"><span></span></span>
+      </div>
+      <ol class="calls" aria-hidden="true">
+        {
+          Array.from({ length: REPEATS }, (_, i) => (
+            <li class="call" style={`--i: ${i}`}>
+              <span class="call-num">{i + 1}</span>
+              {t('fuses.repeat')}
+            </li>
+          ))
+        }
+      </ol>
+      <div class="trip" aria-hidden="true">
+        <span class="trip-stop">{t('fuses.stop')}</span>
+        <span class="trip-reason">{t('fuses.reason')}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .fuses {
+    overflow: hidden;
+  }
+
+  .fuses-row {
+    display: grid;
+    gap: 40px;
+    align-items: center;
+  }
+
+  @media (min-width: 1000px) {
+    .fuses-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 56px;
+    }
+
+    .fuses-row .section-head {
+      margin-bottom: 0;
+    }
+  }
+
+  .section-lead {
+    display: grid;
+    gap: 4px;
+  }
+
+  .fuse-list {
+    display: grid;
+    gap: 8px;
+    color: var(--fg-soft);
+    font-size: 15px;
+  }
+
+  .fuse-list li::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 10px;
+    background: var(--spark);
+    box-shadow: 0 0 10px var(--spark-glow);
+  }
+
+  .console {
+    --cycle: 10s;
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    background: #0a0b0d;
+    font-family: var(--font-title);
+    box-shadow:
+      0 30px 80px -30px rgb(0 0 0 / 0.9),
+      0 0 80px -30px var(--spark-glow);
+    overflow: hidden;
+  }
+
+  .console-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--surface-3);
+  }
+
+  .console-title {
+    color: var(--fg-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Token meter: it climbs with every repeat and freezes when the fuse trips */
+  .meter {
+    flex: 1;
+    height: 4px;
+    background: var(--surface-3);
+  }
+
+  .meter span {
+    display: block;
+    width: 64%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--warn) 70%, var(--danger));
+  }
+
+  .calls {
+    display: grid;
+    gap: 2px;
+    padding: 14px 10px 6px;
+  }
+
+  .call {
+    display: flex;
+    gap: 12px;
+    padding: 8px 10px;
+    color: var(--fg-soft);
+    font-size: 13px;
+  }
+
+  .call-num {
+    color: var(--fg-faint);
+  }
+
+  .call:nth-child(n + 3) {
+    color: var(--warn);
+  }
+
+  .trip {
+    display: grid;
+    gap: 4px;
+    margin: 6px 14px 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--spark);
+    border-radius: var(--radius);
+    background: rgb(255 46 151 / 0.08);
+  }
+
+  .trip-stop {
+    color: #ff8cc6;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .trip-stop::before {
+    content: '■ ';
+  }
+
+  .trip-reason {
+    color: var(--fg-soft);
+    font-size: 12px;
+  }
+
+  /*
+   * The story loops while the console is on screen: the same call comes four times, the meter climbs,
+   * then the fuse trips and the run stops; without motion the markup shows the tripped state
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .console.is-playing .call {
+      animation: call-in var(--cycle) ease-out infinite backwards;
+      animation-delay: calc(var(--i) * 1.1s);
+    }
+
+    .console.is-playing .meter span {
+      animation: meter var(--cycle) linear infinite;
+    }
+
+    .console.is-playing .trip {
+      animation: trip var(--cycle) ease-out infinite backwards;
+    }
+  }
+
+  @keyframes call-in {
+    0% {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    4%,
+    86% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes meter {
+    0% {
+      width: 4%;
+    }
+    44%,
+    96% {
+      width: 64%;
+    }
+    100% {
+      width: 4%;
+    }
+  }
+
+  @keyframes trip {
+    0%,
+    44% {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    48% {
+      opacity: 1;
+      transform: scale(1.03);
+      box-shadow: 0 0 40px var(--spark-glow);
+    }
+    54%,
+    90% {
+      opacity: 1;
+      transform: none;
+      box-shadow: none;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+</style>

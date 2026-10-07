@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro'
+import Header from './Header.astro'
+import Hero from './Hero.astro'
+import Facts from './Facts.astro'
+import Langs from './Langs.astro'
+import Agent from './Agent.astro'
+import Fuses from './Fuses.astro'
+import Detectors from './Detectors.astro'
+import Features from './Features.astro'
+import Family from './Family.astro'
+import Install from './Install.astro'
+import Cta from './Cta.astro'
+import Footer from './Footer.astro'
+import type { Lang } from '../config/languages'
+
+/** The whole landing in one language; each language page only picks the language */
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+---
+
+<Base lang={lang}>
+  <Header lang={lang} />
+  <main id="main">
+    <Hero lang={lang} />
+    <Facts lang={lang} />
+    <Langs lang={lang} />
+    <Agent lang={lang} />
+    <Fuses lang={lang} />
+    <Detectors lang={lang} />
+    <Features lang={lang} />
+    <Family lang={lang} />
+    <Install lang={lang} />
+    <Cta lang={lang} />
+  </main>
+  <Footer lang={lang} />
+</Base>

@@ -1,8 +1,9 @@
 ---
-import Lines from './Lines.astro'
+import Lines from '@vibebrains/site-kit/components/Lines.astro'
 import DownloadButtons from './DownloadButtons.astro'
-import type { Lang } from '../config/languages'
-import { brandIcons, links } from '../config/site'
+import type { Lang } from '@vibebrains/site-kit/languages'
+import { brandIcons } from '@vibebrains/site-kit/brands'
+import { links } from '../config/site'
 import { useTranslations } from '../i18n'
 
 interface Props {

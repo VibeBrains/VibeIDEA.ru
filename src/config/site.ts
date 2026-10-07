@@ -16,20 +16,5 @@ export const links = {
 /** localStorage key that remembers the language the visitor picked explicitly */
 export const LANG_STORAGE_KEY = 'vibeidea.lang'
 
-/** Sibling products of the family section: product names, the same in every language */
-export const siblings = { vibeide: 'VibeIDE', vibememory: 'VibeMemory' } as const
-
-/**
- * App icons of the family, copied as they ship — a redrawn mark drifts from the real one:
- * VibeIDEA's from vibeidea-customization/resources/vibeidea.svg of its repository
- * VibeIDE's from resources/darwin/code.icns of its repository
- * VibeMemory's from public/favicon.svg of vibememory.ru
- */
-export const brandIcons = {
-  vibeidea: '/brands/vibeidea.svg',
-  vibeide: '/brands/vibeide.png',
-  vibememory: '/brands/vibememory.svg',
-} as const
-
 /** Agents the IDE starts over ACP: product names, the same in every language */
 export const acpAgents = ['Claude Code', 'Codex', 'Gemini CLI'] as const
